@@ -9,22 +9,18 @@ from status import Status
 
 db_interface = db.DBInterface()
 
-def row_to_message(row, dist):
-    message = """{} приглашает тебя в гости и дарит скидку в 20%!
-Подходи по адресу: {}
-Заведение всего в {}  метрах от тебя!
-    """.format(row[1], row[5], '%.0f' % (dist * 1000))
-    return message
+def row_to_messages(row, dist):
+    messages = [
+        '*{}* приглашает тебя в гости и дарит скидку в 20%!'.format(row[1]),
+        ('Подходи по адресу: {}.'.format(row[5]) + 
+        '\nЗаведение всего в {}  метрах от тебя! [🏃]({})'.format('%.0f' % (dist * 1000), row[6]))
+    ]
+    return messages
 
 def get_top_of_places(status, location):
     lon = location.longitude
     lat = location.latitude
-    if status == Status.beauty_choosed:
-        type = 'beauty'
-    elif status == Status.party_choosed:
-        type = 'party'
-    else:
-        type = 'cafe'
+    type = Status.get_id_of_choosen(status)
     query = """
         select *
         from places
@@ -35,5 +31,5 @@ def get_top_of_places(status, location):
         key=lambda x:
             distance(x[3], x[4], lat, lon),
         )
-    return list(map(lambda x: (x[0], row_to_message(x,
+    return list(map(lambda x: (x[0], row_to_messages(x,
     distance(x[3], x[4], lat, lon))), places_list[:3]))
