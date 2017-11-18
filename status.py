@@ -1,14 +1,27 @@
-class Category:
-    cafe = 0
-    beauty = 1
-    party = 2
 
 class Status:
     just_started = 0
-    cafe_choosed = 1
-    beauty_choosed = 2
-    party_choosed = 3
-    geo_no = 4
-    geo_cafe = 5
-    geo_beauty = 6
-    geo_party = 7
+
+    @staticmethod
+    def create_status(action, parameter):
+        return "{} {}".format(action, parameter)
+
+    @staticmethod
+    def create_choosed_status(parameter):
+        return "{} {}".format("choosed", parameter)
+
+    @staticmethod
+    def was_choosed_smth(status):
+        return status.split(' ')[0] == 'choosed'
+
+    @staticmethod
+    def was_sent_geo(status):
+        return status.split(' ')[0] == 'geo'
+
+    @staticmethod
+    def choosed_to_geo(status):
+        return 'geo ' + status.split(' ')[1]
+
+    @staticmethod
+    def get_id_of_choosen(status):
+        return status.split(' ')[1]

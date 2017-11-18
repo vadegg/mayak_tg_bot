@@ -36,16 +36,17 @@ class DBInterface():
         """.format(str(tg_id))
         query_create = """
             insert into statuses (tg_id, status)
-            values ({}, {})
+            values ({}, '{}')
         """.format(str(tg_id), str(status))
         self.execute_fetchone_close(query_delete)
         self.execute_fetchone_close(query_create)
 
-    def log_message(self, tg_id, message, time):
+    def log_message(self, tg_id, message, time, fname, lname, uname):
         query = """
-            insert into raw_messages (user, message, time)
-            values ({}, '{}', {});
-        """.format(str(tg_id), str(message), str(time))
+            insert into raw_messages (user, message, time,
+            first_name, last_name, username)
+            values ({}, '{}', {}, '{}', '{}', '{}');
+        """.format(str(tg_id), str(message), str(time), fname, lname, uname)
         self.execute_fetchone_close(query)
 
     def get_place_by_id(self, place_id):
