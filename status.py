@@ -25,3 +25,7 @@ class Status:
     @staticmethod
     def get_id_of_choosen(status):
         return status.split(' ')[1]
+
+    @staticmethod
+    def is_adding_a_place(status):
+        return status.split(' ')[0] == 'add_place'

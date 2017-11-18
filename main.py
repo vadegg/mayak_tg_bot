@@ -16,6 +16,8 @@ import places
 change_category = "⬅️ Изменить категорию"
 send_geo = "🌍 Отправить местоположение"
 contact_us = "📣 Связаться с нами"
+add_place = "🤔 Добавить новое кафе"
+dont_want_to_suggest = "😤 Не хочу предлагать"
 class Category:
     def __init__(self, name, identificator, number, button_title):
         self.number = number
@@ -58,17 +60,17 @@ categories = Categories()
 categories.add(
     name = 'Кафе',
     identificator = 'cafe',
-    button_title = '🍽  Кафе'
+    button_title = 'Кафе ☕️'
 )
 categories.add(
-    name = 'Салон Красоты',
+    name = 'Бары',
     identificator = 'beauty',
-    button_title = '💅 Салон Красоты'
+    button_title = 'Бары🍹'
 )
 categories.add(
-    name = 'Развлечения',
+    name = 'Рестораны',
     identificator = 'party',
-    button_title = '🎡 Развлечения'
+    button_title = 'Рестораны🍔'
 )
 
 db_interface = db.DBInterface()
@@ -119,14 +121,8 @@ def get_location(message, choose):
     keyboard.add(button_change_category)
     bot.send_message(
         message.chat.id,
-        ('Отлично!\nТы выбрал *{}*.'.format(choose.lower())),
-        parse_mode = 'Markdown'
-    )
-    bot.send_message(
-        message.chat.id,
         (
-        'Теперь дай мне знать, где ты, чтобы я мог' +
-        ' подобрать для тебя лучшее заведение!'
+        'Поделись геопозицией и мы покажем лучшее рядом 💫'
         ),
         reply_markup=keyboard
 
@@ -221,7 +217,6 @@ def greetings(message, dont_log=False):
         message.chat.id,
         Status.just_started
     )
-    send_contact_info(message)
     markup = telebot.types.ReplyKeyboardMarkup(
         one_time_keyboard=True,
         resize_keyboard=True
@@ -229,19 +224,42 @@ def greetings(message, dont_log=False):
     for c in categories:
         markup.add(c.button_title)
 
+    markup.add(add_place)
     bot.send_message(message.chat.id,
-        "Что ты хочешь посетить?",
+        """Отлично! Теперь выбери категорию ☺️
+
+Перекусить: 🍔
+Припить: 🍹
+Выпить кофе: ☕️
+        """,
         reply_markup=markup
     )
 
+def request_new_places(message):
+    send_contact_info(message)
+    db_interface.set_status(
+        message.chat.id,
+        Status.create_status("add_place", "if_want"))
+    keyboard = ReplyKeyboardMarkup(
+        row_width=2,
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+    keyboard.add(dont_want_to_suggest)
+    bot.send_message(
+        message.chat.id,
+        ("А ещё ты можешь предложить нам добавить в сервис новое заведение.\n" +
+        "Напиши мне название заведения, которое ты хотел бы добавить"),
+        reply_markup=keyboard
+    )
 @bot.message_handler(content_types=["text"])
 def talk(message):
     log_raw_message(message)
     status = db_interface.get_status(message.chat.id) 
-    if message.text == contact_us:
-        send_contact_info(message)
-        return
     if status == Status.just_started:
+        if message.text == add_place:
+            request_new_places(message)
+            return
         if message.text.strip().lower() == 'бордель':
             bot.send_message(
                 message.chat.id,
@@ -267,7 +285,24 @@ def talk(message):
             greetings(message)
         else:
             undefined_error(message)
-
+    elif (Status.is_adding_a_place(status)):
+        if message.text == dont_want_to_suggest:
+            bot.send_message(
+                message.chat.id,
+                "Жаль, если придумаешь, пиши!"
+            )
+        else:
+            bot.send_message(
+                -1001329511432,
+                ("Пользователь @{} предложил добавить заведение:\n\n" +
+                "{}").format(message.chat.username, message.text),
+                message.text
+            )
+            bot.send_message(
+                message.chat.id,
+                "Спасибо! Мы постараемся добавить твоё любимое заведение!"
+            )
+        greetings(message)
 
 @bot.callback_query_handler(func=lambda call: True)
 def choose_place(call):
