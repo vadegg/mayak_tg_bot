@@ -334,4 +334,7 @@ def choose_place(call):
             greetings(call.message, dont_log=True)
 
 if __name__ == '__main__':
-    bot.polling(none_stop=True)
+    try:
+        bot.polling(none_stop=True)
+    except Exception as e:
+        print(e)
