@@ -77,6 +77,16 @@ db_interface = db.DBInterface()
 bot_token = config.bot_token
 bot = telebot.TeleBot(bot_token)
 
+def log_raw_call(call):
+    db_interface.log_message(
+        call.message.chat.id,
+        "callback: " + call.data,
+        call.message.date,
+        call.message.chat.first_name,
+        call.message.chat.last_name,
+        call.message.chat.username
+    )
+
 def log_raw_message(message):
     db_interface.log_message(
         message.chat.id,
@@ -175,18 +185,13 @@ def location_recieved(message):
             callback_data="place_{}".format(place[0])
         )
         keyboard.add(callback_button)
-        for m in place[1][:-1]:
+        for m in place[1]:
             bot.send_message(
                 message.chat.id,
                 m,
-                parse_mode = 'Markdown'
+                parse_mode = 'Markdown',
+                reply_markup = keyboard
             )
-        bot.send_message(
-            message.chat.id,
-            place[1][-1],
-            reply_markup=keyboard,
-            parse_mode = 'Markdown'
-        )
 
     keyboard = ReplyKeyboardMarkup(
         row_width=1,
@@ -201,8 +206,9 @@ def location_recieved(message):
     bot.send_message(
         message.chat.id,
         (
-        'Если ничего из предложенного не нравится, можешь перейти назад ' +
-        'и выбрать другую категорию'
+        'Чтобы узнать кодовое слово нажми 👍 под постом\n\n' +
+        'Чтобы посмотреть предложения в других категориях нажми' +
+        ' "Изменить категорию" ⬇️'
         ),
         reply_markup=keyboard
 
@@ -306,6 +312,7 @@ def talk(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def choose_place(call):
+    log_raw_call(call)
     if call.message:
         if call.data.startswith("place"):
             place_id = call.data.split('_')[1]
@@ -313,7 +320,10 @@ def choose_place(call):
 
             bot.send_message(
                 call.message.chat.id,
-                "Отлично!\nЗаходи в *{}*".format(place_info[1]),
+"""Мы рады что тебе нравится! ☺️
+Перед заказом на забудь сказать кодовое слово "Маяк" 
+""",
+#                "Отлично!\nЗаходи в *{}*".format(place_info[1]),
                 reply_markup=ReplyKeyboardHide(),
                 parse_mode="Markdown"
             )
@@ -326,7 +336,7 @@ def choose_place(call):
             keyboard.add(callback_button)
             bot.send_message(
                 call.message.chat.id,
-                "По адресу _{}_".format(place_info[5]),
+                "Хорошего дня 🙏",
                 reply_markup=keyboard,
                 parse_mode="Markdown"
             )
@@ -334,7 +344,9 @@ def choose_place(call):
             greetings(call.message, dont_log=True)
 
 if __name__ == '__main__':
-    try:
-        bot.polling(none_stop=True)
-    except Exception as e:
-        print(e)
+    bot.polling(none_stop=True)
+    while True:
+        try:
+            bot.polling(none_stop=True)
+        except Exception as e:
+            print(e.args)
