@@ -65,7 +65,7 @@ categories.add(
 categories.add(
     name = 'Бары',
     identificator = 'beauty',
-    button_title = 'Бары🍹'
+    button_title = 'Бары🍷'
 )
 categories.add(
     name = 'Рестораны',
